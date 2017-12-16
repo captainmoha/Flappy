@@ -29,18 +29,26 @@ public class flappy extends ApplicationAdapter {
     private float gap = 400;
 
     // max offset to move the tubes with
-    float maxTubeOffset;
+    private float maxTubeOffset;
 
-    // current tube offset, will be randomly generated in a certain range
-    float tubeOffset;
+    private int numberOfTubes = 4;
 
-    float tubeVelocity = 4;
-    float tubeX;
+    // current tube offsets, will be randomly generated in a certain range
+    private float[] tubeOffset = new float[numberOfTubes];
+
+    // tubes x positions
+    private float[] tubeX = new float[numberOfTubes];
+
+    // distance between moving tubes
+    private float distanceBetweenTubes;
+
+    final private float tubeVelocity = 4;
+
     // game in progress
     private int gameState = 0;
 
 
-    Random randomGen;
+    private Random randomGen;
 
     @Override
     public void create () {
@@ -70,7 +78,15 @@ public class flappy extends ApplicationAdapter {
         // random generator to set offset to a random value
         randomGen = new Random();
 
-        tubeX = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth() / 2;
+
+        distanceBetweenTubes = Gdx.graphics.getWidth() * 3/4 ;
+
+        // initialize offsets and x positions of all tubes
+        for (int i = 0; i < numberOfTubes; i++) {
+            // generate a random offset in range
+            tubeOffset[i] = (randomGen.nextFloat() - (float) 0.5) * (Gdx.graphics.getHeight() - gap - 200);
+            tubeX[i] = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth() / 2 + i * distanceBetweenTubes;
+        }
 
     }
 
@@ -99,21 +115,32 @@ public class flappy extends ApplicationAdapter {
                 Gdx.app.log("Touched", "Yep!");
 
                 // user tapped make the bird go higher
-                velocity = -20;
+                velocity = -25;
 
-                // generate a random offset in range
-                tubeOffset = (randomGen.nextFloat() - (float) 0.5) * (Gdx.graphics.getHeight() - gap - 200);
-                tubeX = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth() / 2;
+
             }
 
-            tubeX -= 4;
-            // draw tubes after adding the random offset
-            float topTubeY = Gdx.graphics.getHeight()/2 + gap/ 2;
-            batch.draw(topTube, tubeX, topTubeY + tubeOffset);
+            // show tubes and animate them
+            for (int i = 0; i < numberOfTubes; i++) {
 
 
-            float bottomTubeY = Gdx.graphics.getHeight()/2 - gap / 2 - bottomTube.getHeight();
-            batch.draw(bottomTube, tubeX, bottomTubeY + tubeOffset);
+                // if a tube moves out of the window make it reappear again at the start
+                if (tubeX[i] < - topTube.getWidth()) {
+                    tubeX[i] += numberOfTubes * distanceBetweenTubes;
+                }
+
+                else {
+                    tubeX[i] -= tubeVelocity;
+                }
+
+                // draw tubes after adding the random offset
+                float topTubeY = Gdx.graphics.getHeight()/2 + gap/ 2;
+                batch.draw(topTube, tubeX[i], topTubeY + tubeOffset[i]);
+
+
+                float bottomTubeY = Gdx.graphics.getHeight()/2 - gap / 2 - bottomTube.getHeight();
+                batch.draw(bottomTube, tubeX[i], bottomTubeY + tubeOffset[i]);
+            }
 
             // prevent bird from disappearing at the bottom of the window
             if (birdY > 0 || velocity < 0) {
