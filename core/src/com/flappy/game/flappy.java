@@ -5,6 +5,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
+import java.util.Random;
+
 public class flappy extends ApplicationAdapter {
 
     private SpriteBatch batch;
@@ -24,10 +26,15 @@ public class flappy extends ApplicationAdapter {
     private Texture bottomTube;
 
     // gap between tubes
-    private float gap = 700;
+    private float gap = 400;
+    float maxTubeOffset;
+    float tubeOffset;
 
     // game in progress
     private int gameState = 0;
+
+
+    Random randomGen;
 
     @Override
     public void create () {
@@ -50,6 +57,10 @@ public class flappy extends ApplicationAdapter {
         // tubes
         topTube = new Texture("toptube.png");
         bottomTube = new Texture("bottomtube.png");
+        maxTubeOffset = Gdx.graphics.getHeight() / 2 - gap / 2 - 100;
+
+        randomGen = new Random();
+
     }
 
     @Override
@@ -71,23 +82,22 @@ public class flappy extends ApplicationAdapter {
         if (gameState == 1) {
             // game started here
 
-
-            // draw tubes
-            float  topTubeX = Gdx.graphics.getWidth()/ 2 - topTube.getWidth()/2;
-            float topTubeY = Gdx.graphics.getHeight()/2 + gap/ 2;
-            batch.draw(topTube, topTubeX, topTubeY);
-
-            float bottomTubeX = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth()/2;
-            float bottomTubeY = Gdx.graphics.getHeight()/2 - gap / 2 - bottomTube.getHeight();
-            batch.draw(bottomTube, bottomTubeX, bottomTubeY);
-
-
             // tap to make the bird go up
             if (Gdx.input.justTouched()) {
 
                 Gdx.app.log("Touched", "Yep!");
                 velocity = -20;
+                tubeOffset = (randomGen.nextFloat() - (float) 0.5) * (Gdx.graphics.getHeight() - gap - 200);
             }
+
+            // draw tubes
+            float  topTubeX = Gdx.graphics.getWidth()/ 2 - topTube.getWidth()/2;
+            float topTubeY = Gdx.graphics.getHeight()/2 + gap/ 2;
+            batch.draw(topTube, topTubeX, topTubeY + tubeOffset);
+
+            float bottomTubeX = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth()/2;
+            float bottomTubeY = Gdx.graphics.getHeight()/2 - gap / 2 - bottomTube.getHeight();
+            batch.draw(bottomTube, bottomTubeX, bottomTubeY + tubeOffset);
 
             // prevent bird from disappearing at the bottom of the window
             if (birdY > 0 || velocity < 0) {
