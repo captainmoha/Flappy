@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 
 import java.awt.Shape;
@@ -75,7 +76,9 @@ public class flappy extends ApplicationAdapter {
         birds = new Texture[2];
         birds[0] = new Texture("bird.png");
         birds[1] = new Texture("bird2.png");
-        shapeRenderer = new ShapeRenderer();
+
+        /*shapeRenderer = new ShapeRenderer();*/
+
         birdCircle = new Circle();
 
         // game is not in progress at first
@@ -103,7 +106,9 @@ public class flappy extends ApplicationAdapter {
         for (int i = 0; i < numberOfTubes; i++) {
             // generate a random offset in range
             tubeOffset[i] = (randomGen.nextFloat() - (float) 0.5) * (Gdx.graphics.getHeight() - gap - 200);
-            tubeX[i] = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth() / 2 + i * distanceBetweenTubes;
+            tubeX[i] = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth() / 2 + Gdx.graphics.getWidth() + i * distanceBetweenTubes;
+            topRecs[i] = new Rectangle();
+            bottomRecs[i] = new Rectangle();
         }
 
     }
@@ -137,6 +142,13 @@ public class flappy extends ApplicationAdapter {
 
                 // user tapped make the bird go higher
                 velocity = -25;
+
+                // animate bird wings
+                if (flapState == 0) {
+                    flapState = 1;
+                } else {
+                    flapState = 0;
+                }
 
 
             }
@@ -186,12 +198,6 @@ public class flappy extends ApplicationAdapter {
             }
         }
 
-        // animate bird wings
-        if (flapState == 0) {
-            flapState = 1;
-        } else {
-            flapState = 0;
-        }
 
         // draw bird
         batch.draw(birds[flapState], Gdx.graphics.getWidth()/2 - birds[flapState].getWidth()/2, birdY);
@@ -199,18 +205,24 @@ public class flappy extends ApplicationAdapter {
         batch.end();
 
         // collision detection
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(Color.RED);
+
+        /*shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.RED);*/
+
         birdCircle.set(Gdx.graphics.getWidth() / 2, birdY + birds[flapState].getHeight() / 2, birds[flapState].getWidth()/2);
 
-        shapeRenderer.circle(birdCircle.x, birdCircle.y, birdCircle.radius);
+        /*shapeRenderer.circle(birdCircle.x, birdCircle.y, birdCircle.radius);*/
 
         for (int i = 0; i < numberOfTubes; i++) {
-            shapeRenderer.rect(tubeX[i], topTubeY  + tubeOffset[i], topTube.getWidth(), topTube.getHeight());
-            shapeRenderer.rect(tubeX[i], bottomTubeY  + tubeOffset[i], bottomTube.getWidth(), bottomTube.getHeight());
+           /* shapeRenderer.rect(tubeX[i], topTubeY  + tubeOffset[i], topTube.getWidth(), topTube.getHeight());
+            shapeRenderer.rect(tubeX[i], bottomTubeY  + tubeOffset[i], bottomTube.getWidth(), bottomTube.getHeight());*/
+
+            if (Intersector.overlaps(birdCircle, topRecs[i]) || Intersector.overlaps(birdCircle, bottomRecs[i])) {
+                Gdx.app.log("collision", "WOO!");
+            }
         }
 
-        shapeRenderer.end();
+        /*shapeRenderer.end();*/
 
     }
 }
