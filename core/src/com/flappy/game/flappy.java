@@ -27,7 +27,11 @@ public class flappy extends ApplicationAdapter {
 
     // gap between tubes
     private float gap = 400;
+
+    // max offset to move the tubes with
     float maxTubeOffset;
+
+    // current tube offset, will be randomly generated in a certain range
     float tubeOffset;
 
     // game in progress
@@ -57,8 +61,11 @@ public class flappy extends ApplicationAdapter {
         // tubes
         topTube = new Texture("toptube.png");
         bottomTube = new Texture("bottomtube.png");
+
+        // max offset to move the tubes with
         maxTubeOffset = Gdx.graphics.getHeight() / 2 - gap / 2 - 100;
 
+        // random generator to set offset to a random value
         randomGen = new Random();
 
     }
@@ -86,11 +93,15 @@ public class flappy extends ApplicationAdapter {
             if (Gdx.input.justTouched()) {
 
                 Gdx.app.log("Touched", "Yep!");
+
+                // user tapped make the bird go higher
                 velocity = -20;
+
+                // generate a random offset in range
                 tubeOffset = (randomGen.nextFloat() - (float) 0.5) * (Gdx.graphics.getHeight() - gap - 200);
             }
 
-            // draw tubes
+            // draw tubes after adding the random offset
             float  topTubeX = Gdx.graphics.getWidth()/ 2 - topTube.getWidth()/2;
             float topTubeY = Gdx.graphics.getHeight()/2 + gap/ 2;
             batch.draw(topTube, topTubeX, topTubeY + tubeOffset);
