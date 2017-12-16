@@ -2,15 +2,21 @@ package com.flappy.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Rectangle;
 
+import java.awt.Shape;
 import java.util.Random;
 
 public class flappy extends ApplicationAdapter {
 
     private SpriteBatch batch;
     private Texture background;
+    private ShapeRenderer shapeRenderer;
 
     private Texture[] birds;
     // used to animate wings
@@ -21,9 +27,17 @@ public class flappy extends ApplicationAdapter {
     private float velocity = 0;
     private float gravity = (float) 1.3;
 
+
+
     // tubes
     private Texture topTube;
     private Texture bottomTube;
+
+
+    // collision detection
+    private Circle birdCircle;
+    private Rectangle[] topRecs;
+    private Rectangle[] bottomRecs;
 
     // gap between tubes
     private float gap = 400;
@@ -61,6 +75,8 @@ public class flappy extends ApplicationAdapter {
         birds = new Texture[2];
         birds[0] = new Texture("bird.png");
         birds[1] = new Texture("bird2.png");
+        shapeRenderer = new ShapeRenderer();
+        birdCircle = new Circle();
 
         // game is not in progress at first
         flapState = 0;
@@ -72,6 +88,8 @@ public class flappy extends ApplicationAdapter {
         topTube = new Texture("toptube.png");
         bottomTube = new Texture("bottomtube.png");
 
+        topRecs = new Rectangle[numberOfTubes];
+        bottomRecs = new Rectangle[numberOfTubes];
         // max offset to move the tubes with
         maxTubeOffset = Gdx.graphics.getHeight() / 2 - gap / 2 - 100;
 
@@ -92,6 +110,9 @@ public class flappy extends ApplicationAdapter {
 
     @Override
     public void render () {
+
+        float topTubeY = 0;
+        float bottomTubeY = 0;
 
         batch.begin();
 
@@ -127,19 +148,26 @@ public class flappy extends ApplicationAdapter {
                 // if a tube moves out of the window make it reappear again at the start
                 if (tubeX[i] < - topTube.getWidth()) {
                     tubeX[i] += numberOfTubes * distanceBetweenTubes;
+                    tubeOffset[i] = (randomGen.nextFloat() - (float) 0.5) * (Gdx.graphics.getHeight() - gap - 200);
                 }
 
                 else {
                     tubeX[i] -= tubeVelocity;
                 }
 
+
                 // draw tubes after adding the random offset
-                float topTubeY = Gdx.graphics.getHeight()/2 + gap/ 2;
+                topTubeY = Gdx.graphics.getHeight()/2 + gap/ 2;
                 batch.draw(topTube, tubeX[i], topTubeY + tubeOffset[i]);
+                // used for collision detection with top tubes
+                topRecs[i] = new Rectangle(tubeX[i], topTubeY + tubeOffset[i], topTube.getWidth(), topTube.getHeight());
 
 
-                float bottomTubeY = Gdx.graphics.getHeight()/2 - gap / 2 - bottomTube.getHeight();
+                bottomTubeY = Gdx.graphics.getHeight()/2 - gap / 2 - bottomTube.getHeight();
                 batch.draw(bottomTube, tubeX[i], bottomTubeY + tubeOffset[i]);
+                // used for collision detection with bottom tubes
+                bottomRecs[i] = new Rectangle(tubeX[i], bottomTubeY + tubeOffset[i], bottomTube.getWidth(), bottomTube.getHeight());
+
             }
 
             // prevent bird from disappearing at the bottom of the window
@@ -169,6 +197,20 @@ public class flappy extends ApplicationAdapter {
         batch.draw(birds[flapState], Gdx.graphics.getWidth()/2 - birds[flapState].getWidth()/2, birdY);
 
         batch.end();
+
+        // collision detection
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.RED);
+        birdCircle.set(Gdx.graphics.getWidth() / 2, birdY + birds[flapState].getHeight() / 2, birds[flapState].getWidth()/2);
+
+        shapeRenderer.circle(birdCircle.x, birdCircle.y, birdCircle.radius);
+
+        for (int i = 0; i < numberOfTubes; i++) {
+            shapeRenderer.rect(tubeX[i], topTubeY  + tubeOffset[i], topTube.getWidth(), topTube.getHeight());
+            shapeRenderer.rect(tubeX[i], bottomTubeY  + tubeOffset[i], bottomTube.getWidth(), bottomTube.getHeight());
+        }
+
+        shapeRenderer.end();
 
     }
 }
