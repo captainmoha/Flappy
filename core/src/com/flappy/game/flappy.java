@@ -34,6 +34,8 @@ public class flappy extends ApplicationAdapter {
     // current tube offset, will be randomly generated in a certain range
     float tubeOffset;
 
+    float tubeVelocity = 4;
+    float tubeX;
     // game in progress
     private int gameState = 0;
 
@@ -68,6 +70,8 @@ public class flappy extends ApplicationAdapter {
         // random generator to set offset to a random value
         randomGen = new Random();
 
+        tubeX = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth() / 2;
+
     }
 
     @Override
@@ -99,16 +103,17 @@ public class flappy extends ApplicationAdapter {
 
                 // generate a random offset in range
                 tubeOffset = (randomGen.nextFloat() - (float) 0.5) * (Gdx.graphics.getHeight() - gap - 200);
+                tubeX = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth() / 2;
             }
 
+            tubeX -= 4;
             // draw tubes after adding the random offset
-            float  topTubeX = Gdx.graphics.getWidth()/ 2 - topTube.getWidth()/2;
             float topTubeY = Gdx.graphics.getHeight()/2 + gap/ 2;
-            batch.draw(topTube, topTubeX, topTubeY + tubeOffset);
+            batch.draw(topTube, tubeX, topTubeY + tubeOffset);
 
-            float bottomTubeX = Gdx.graphics.getWidth()/ 2 - bottomTube.getWidth()/2;
+
             float bottomTubeY = Gdx.graphics.getHeight()/2 - gap / 2 - bottomTube.getHeight();
-            batch.draw(bottomTube, bottomTubeX, bottomTubeY + tubeOffset);
+            batch.draw(bottomTube, tubeX, bottomTubeY + tubeOffset);
 
             // prevent bird from disappearing at the bottom of the window
             if (birdY > 0 || velocity < 0) {
