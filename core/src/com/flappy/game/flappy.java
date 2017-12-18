@@ -2,6 +2,9 @@ package com.flappy.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -17,6 +20,8 @@ import java.util.Random;
 import java.util.TreeSet;
 
 public class flappy extends ApplicationAdapter {
+
+    private boolean isGameRunning;
 
     private SpriteBatch batch;
     private Texture background;
@@ -66,10 +71,19 @@ public class flappy extends ApplicationAdapter {
     private Texture gameover;
     private int gameState;
     private int score;
+    private int highScore;
+
     private Set<Integer> scoredTubes;
-    private BitmapFont font;
+    private BitmapFont scoreFont;
+    
+    private Preferences prefs;
 
     private Random randomGen;
+
+    // sound
+    private Sound jumpSound, overSound, crossSound;
+    private Music mainMusic, highMusic;
+
 
     @Override
     public void create () {
@@ -82,20 +96,28 @@ public class flappy extends ApplicationAdapter {
         initTextures();
 
         initShapes();
+        initSounds();
 
         startGame();
 
     }
+
 
     private void configGame() {
         /*
         * prepares initial game configurations and scores
         * */
 
-        score = 0;
-        font = new BitmapFont(Gdx.files.internal("font.fnt"));
-        font.setColor(Color.WHITE);
 
+        score = 0;
+        prefs = Gdx.app.getPreferences("highScore");
+
+        loadScore();
+
+        isGameRunning = false;
+
+        scoreFont = new BitmapFont(Gdx.files.internal("font.fnt"));
+        scoreFont.setColor(Color.WHITE);
 
         scoredTubes = new TreeSet<Integer>();
 
@@ -115,6 +137,7 @@ public class flappy extends ApplicationAdapter {
         distanceBetweenTubes = Gdx.graphics.getWidth() * 3/4 ;
 
     }
+
 
     private void initTextures() {
         /*
@@ -137,6 +160,7 @@ public class flappy extends ApplicationAdapter {
 
     }
 
+
     private void initShapes() {
         /*
         * initiate shapes used for collision detection
@@ -146,6 +170,19 @@ public class flappy extends ApplicationAdapter {
         topRecs = new Rectangle[numberOfTubes];
         bottomRecs = new Rectangle[numberOfTubes];
 
+    }
+
+
+    private void initSounds() {
+        /*
+        * initiate sound files
+        * */
+        jumpSound = Gdx.audio.newSound(Gdx.files.internal("zoop.wav"));
+        overSound = Gdx.audio.newSound(Gdx.files.internal("lose.mp3"));
+        crossSound = Gdx.audio.newSound(Gdx.files.internal("cross.wav"));
+
+        mainMusic = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
+        highMusic = Gdx.audio.newMusic(Gdx.files.internal("win.mp3"));
     }
 
 
@@ -164,6 +201,7 @@ public class flappy extends ApplicationAdapter {
         }
 
     }
+
 
     @Override
     public void render () {
@@ -196,7 +234,7 @@ public class flappy extends ApplicationAdapter {
                     flapState = 0;
                 }
 
-
+                jumpSound.play();
             }
 
             // show tubes and animate them
@@ -242,6 +280,7 @@ public class flappy extends ApplicationAdapter {
             }
 
         }
+
         // game hasn't started yet
         else if (gameState == 0){
 
@@ -249,12 +288,25 @@ public class flappy extends ApplicationAdapter {
 
                 Gdx.app.log("Touched", "Yep!");
                 // start game
+                isGameRunning = true;
                 gameState = 1;
+                mainMusic.play();
+                jumpSound.play();
             }
         }
 
         // game over
         else if (gameState == 2){
+
+            // please don't stop the music
+
+            if (isGameRunning) {
+
+                // I have to.
+                mainMusic.stop();
+                overSound.play();
+                isGameRunning = false;
+            }
 
             // draw gameover sprite
             batch.draw(gameover, Gdx.graphics.getWidth()/2 - gameover.getWidth()/2, Gdx.graphics.getHeight()/2 - gameover.getHeight()/2);
@@ -267,7 +319,10 @@ public class flappy extends ApplicationAdapter {
                 score = 0;
                 velocity = -20;
                 scoredTubes.clear();
+                isGameRunning = true;
+                overSound.stop();
                 startGame();
+                mainMusic.play();
             }
         }
 
@@ -277,7 +332,8 @@ public class flappy extends ApplicationAdapter {
 
         // set up font for adding score
 
-        font.draw(batch, score + " ", 100, 200);
+        scoreFont.draw(batch, score + "", 100, 200);
+        scoreFont.draw(batch, "" + highScore, Gdx.graphics.getWidth() - 200, 200);
 
         batch.end();
 
@@ -297,12 +353,47 @@ public class flappy extends ApplicationAdapter {
                 // update score
                 if (tubeX[i] < Gdx.graphics.getWidth() / 2 && !scoredTubes.contains(i)) {
                     score += 1;
+                    crossSound.play();
+                    highScore(score);
                     Gdx.app.log("score", score + "");
                     scoredTubes.add(i);
                 }
             }
         }
 
+    }
 
+
+    private void loadScore() {
+        /*
+        * Load high Score
+        * */
+
+        if (prefs.contains("highScore")) {
+            highScore = prefs.getInteger("highScore");
+
+        } else {
+
+            highScore = 0;
+            prefs.putInteger("highScore", highScore);
+            prefs.flush();
+        }
+
+    }
+
+
+    private void highScore(int high) {
+        /*
+        * Checks if user got a high score
+        * */
+
+        if (prefs.getInteger("highScore") < high) {
+            highScore = high;
+            Gdx.app.log("NEW HIGH", high + "");
+            prefs.putInteger("highScore", high);
+            prefs.flush();
+            mainMusic.stop();
+            highMusic.play();
+        }
     }
 }
